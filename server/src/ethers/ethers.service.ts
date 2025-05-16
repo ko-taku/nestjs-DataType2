@@ -7,6 +7,7 @@ import {
   isBytesLike,
   toUtf8Bytes,
   BytesLike,
+  toUtf8String,
 } from 'ethers';
 import { abi, address } from '../../abis/DataType2.json';
 
@@ -39,6 +40,10 @@ export class EthersService {
 
   async toUtf8Bytes(data: string): Promise<Uint8Array> {
     return toUtf8Bytes(data);
+  }
+
+  async toUtf8String(data: BytesLike): Promise<string> {
+    return toUtf8String(data);
   }
 
   // 위 코드는 지우지 마세요.

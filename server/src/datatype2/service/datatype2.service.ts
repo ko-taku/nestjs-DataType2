@@ -157,18 +157,21 @@ export class Datatype2Service {
       // ⚠️ (byte형이 아닐 시) string -> bytes32(encodeBytes32String)
       // ⚠️ data의 길이는 32바이트로 패딩해야 합니다.(zeroPadValue32)
       if (data) {
-        if (isBytesLike(data)) {
-          const paddingData = await this.ethersService.zeroPadValue32(data);
-          const result = await this.ethersService.setFixedData(paddingData);
-          return result;
-        } else {
-          const byteData = await this.ethersService.encodeBytes32String(data);
-          const result = await this.ethersService.setFixedData(byteData);
-          return result;
+        // setFixedData
+
+        const isBytesLike = await this.ethersService.isBytesLike(data);
+        if (!isBytesLike) {
+          const encoded = await this.ethersService.encodeBytes32String(data);
+          const padded = await this.ethersService.zeroPadValue32(encoded);
+
+          return await this.ethersService.setFixedData(padded);
         }
+
+        const padded = await this.ethersService.zeroPadValue32(data);
+        return await this.ethersService.setFixedData(padded);
       } else {
-        const result = await this.ethersService.getFixedData();
-        return result;
+        // getFixedData
+        return await this.ethersService.getFixedData();
       }
 
     } catch (error) {
@@ -183,17 +186,19 @@ export class Datatype2Service {
       // ⚠️ data가 byte 형의 데이터인지 확인해야 합니다.(isBytesLike)
       // ⚠️ (byte형이 아닐 시) string -> bytes(toUtf8Bytes)
       if (data) {
-        if (isBytesLike(data)) {
-          const result = await this.ethersService.setDynamicData(data);
-          return result;
-        } else {
-          const byteData = await this.ethersService.toUtf8Bytes(data);
-          const result = await this.ethersService.setDynamicData(byteData);
-          return result;
+        // setDynamicData
+
+        const isBytesLike = await this.ethersService.isBytesLike(data);
+        if (!isBytesLike) {
+          const bytes = await this.ethersService.toUtf8Bytes(data);
+          return await this.ethersService.setDynamicData(bytes);
         }
+
+        return await this.ethersService.setDynamicData(data);
       } else {
-        const result = await this.ethersService.getDynamicData();
-        return result;
+        // getDynamicData
+
+        return await this.ethersService.getDynamicData();
       }
     } catch (error) {
       //  Todo: 에러를 응답합니다.(exceptions.createBadRequestException(error.message))
@@ -205,13 +210,23 @@ export class Datatype2Service {
     try {
       // Todo: getDetails의 값을 리턴해야 합니다.
       // ⚠️ bigint 타입은 JSON으로 변환 시 string으로 변환 필요
-      const result = await this.ethersService.getDetails();
-      const parsed = JSON.parse(
-        JSON.stringify(result, (key, value) =>
-          typeof value === 'bigint' ? value.toString() : value
-        )
-      );
-      return parsed;
+      // const result = await this.ethersService.getDetails();
+      // const parsed = JSON.parse(
+      //   JSON.stringify(result, (key, value) =>
+      //     typeof value === 'bigint' ? value.toString() : value
+      //   )
+      // );
+      // return parsed;
+
+      const details = await this.ethersService.getDetails();
+      return details.map((detail) => {
+        if (typeof detail === 'bigint') {
+          return detail.toString();
+        }
+
+        return detail;
+      });
+
     } catch (error) {
       //  Todo: 에러를 응답합니다.(exceptions.createBadRequestException(error.message))
       throw exceptions.createBadRequestException(error.message);
